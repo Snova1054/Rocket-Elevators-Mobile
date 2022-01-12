@@ -1,12 +1,15 @@
 import React, { Component } from 'react'
 import { Text, View, TouchableOpacity, StyleSheet } from 'react-native'
 
+var elevators;
+
 const callingAPI = async () => {
   try {
     let response = await fetch(
     'https://hidden-woodland-68127.herokuapp.com/api/elevators'
     );
     let json = await response.json();
+    elevators = await json;
     return json;
   } 
   catch (error) {
@@ -14,25 +17,26 @@ const callingAPI = async () => {
   }
 };
 
+const DATA = elevators;
 
 class List extends Component {
   state = {
     names: [
       {
         id: 0,
-        name: 'Ben',
+        status: 'Ben',
       },
       {
         id: 1,
-        name: 'Susan',
+        status: 'Susan',
       },
       {
         id: 2,
-        name: 'Robert',
+        status: 'Robert',
       },
       {
         id: 3,
-        name: 'Mary',
+        status: 'Mary',
       }
     ]
   }
@@ -50,7 +54,8 @@ class List extends Component {
           //  onPress = {() => this.alertItemName(item)}
             >
             <Text style = {styles.text}>
-              {item.name}
+              Elevator #{item.id}
+              {item.status}
             </Text>
           </TouchableOpacity>
         ))
