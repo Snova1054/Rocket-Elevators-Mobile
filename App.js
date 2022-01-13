@@ -1,9 +1,9 @@
 import * as React from 'react';
-import {useState} from 'react';
+import {useState, useReducer} from 'react';
 import { Button, View, Text, TextInput, FlatList, StatusBar, SafeAreaView, TouchableOpacity, StyleSheet  } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import List from './components/List'
+// import List from './components/List'
 
 let writtenEmail;
 async function refreshData(){
@@ -143,7 +143,30 @@ function LoginScreen({ navigation }) {
   );
 }
 
+function useForceUpdate(){
+    const [value, setValue] = useState(0); // integer state
+    return () => setValue(value => value + 1); // update the state to force render
+}
+
 function HomeScreen({ navigation }) {
+  const testingUpdate = useForceUpdate();
+  const [updateView, setUpdateView] = useState(0)
+  const forceUpdate =() => {
+    // if(dataLength != DATA.length)
+    // {
+      setUpdateView((updateView) => ++updateView);
+    // }
+  }
+  // const [, forceUpdate] = useReducer(x => x + 1, 0);
+  // let refreshing = false;
+  // function refreshPage( refreshingOrNot) {
+  //   refreshing = refreshingOrNot
+  //   if(refreshing == true)
+  //   {
+  //     forceUpdate();
+  //     refreshing = false;
+  //   }
+  // }
   const [selectedId, setSelectedId] = useState(null);
   
   const renderItem = ({ item }) => {
@@ -172,6 +195,10 @@ function HomeScreen({ navigation }) {
     <SafeAreaView  style={{backgroundColor: '#7d8085', flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: StatusBar.currentHeight || 0}}>
       <Text>Home Screen</Text>
       <Button
+        title="Click refresh"
+        onPress={() => testingUpdate()}
+      />
+      <Button
         title="Go to Elevator"
         onPress={() => {
           /* 1. Navigate to the Elevators route with params */
@@ -185,7 +212,7 @@ function HomeScreen({ navigation }) {
         data={DATA}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        extraData={selectedId}
+        extraData={DATA}
       />
 
     </SafeAreaView >
