@@ -1,21 +1,15 @@
 import React, {useState, useReducer, useEffect} from 'react';
 import {
-  SafeAreaView, StyleSheet, View, Text, FlatList, Modal, TouchableOpacity, TextInput, LogoTitle, Button, StatusBar
+  SafeAreaView, StyleSheet, View, Text, FlatList, Modal, TouchableOpacity, TextInput, LogoTitle, Button, StatusBar, ImageBackground, Image, Dimensions
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import axios from 'axios';
-
 
 let DATA;
 
-async function refreshData(){
+async function prepareData(){
   DATA = await callingElevatorsAPI();
 }
-async function setEmail(text){
-  DATA = await callingElevatorsAPI();
-}
-
 
 
 const callingElevatorsAPI = async () => {
@@ -35,50 +29,67 @@ function temporaryName(id){
   .then(response => console.log(response.json()))
   .catch(error=>console.log(error)) //to catch the errors if any
 }
-// const temporaryName = async(id) => {
-//     try {
-//     let response = await fetch(
-//     `https://hidden-woodland-68127.herokuapp.com/api/elevators/${id}`
-//     );
-//     let json = await response.json();
-//     return await json.status;
-//   } catch (error) {
-//       console.error(error);
-//   }
-// }
 
 function LoginScreen({ navigation }) {
-//Wake up the API
-  fetch(`https://hidden-woodland-68127.herokuapp.com/api/users`);
+  const [isOperationnal, setIsOperationnal] = useState(false);
+  let emptyText = '';
+  let text = useState('');
+  var writtenEmail;
 
-  const onLoginPress = async () => {
-    navigation.navigate('Home');
+  function updateDataEmail(text) {
+    writtenEmail = text.toLowerCase();
+    prepareData()
   }
 
+  const verifyEmail = async () => {
+    try {
+      const response = await fetch(
+        `https://hidden-woodland-68127.herokuapp.com/api/users/${writtenEmail}`
+      );
+      const json = await response.json();
+      if(json == true) {
+        //Navigate to homepage
+        navigation.navigate('Home')
+        setTimeout(() => {
+          setIsOperationnal(true)
+          setIsOperationnal(false)
+        }, 1000);
+      }else{
+        alert("Invalid Email");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   return (
-    <SafeAreaView  style={{backgroundColor: '#7d8085', flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <Text>Enter your Email</Text>
-      <TextInput
-        style={{width: 190, height: 40, margin: 12, borderWidth: 1, padding: 10,}}
-        textAlign='center'
-        value="nicolas.genest@codeboxx.biz"
+    <SafeAreaView  style={{backgroundColor: '#a8acaf', flex: 1, alignItems: 'center', justifyContent: 'flex-start', borderTopWidth: 20, borderTopColor: '#a8acaf'}}>
+      <Image 
+      source={require('./assets/RocketElevatorsLogo.png')} 
+      style={{
+        height: (Dimensions.get('window').width - 25)/2.75, 
+        width: Dimensions.get('window').width - 25,
+        resizeMode: 'stretch',}} 
       />
+      <Text style={{fontSize:22}}>Identification</Text>
       <TextInput
-        // style={{height: 40, margin: 12, borderWidth: 1, padding: 10,}}
-        style={{width: 160, height: 40, margin: 12, borderWidth: 1, padding: 10,}}
+        style={{width: 240, height: 40, margin: 12, borderWidth: 1, padding: 10,}}
         textAlign='center'
         placeholder={'Enter your Email Here'}
-        placeholderTextColor="#aaaaaa"
-        onChangeText={(text) => setEmail(text)}
+        placeholderTextColor="#2a2a28"
+        onChangeText={text => updateDataEmail(text)}
+        value={isOperationnal ? "" : text}
+        editable={true}
         underlineColorAndroid="transparent"
         autoCapitalize="none"
+        autoFocus={true}
         keyboardType="email-address"
       />
       <Button
         title="Log In"
+        color="black"
         onPress={() => {
-          onLoginPress(), setEmail()
+          verifyEmail()
           /* 1. Navigate to the Elevators route with params */
         }}
       />
@@ -86,19 +97,17 @@ function LoginScreen({ navigation }) {
   );
 }
 
-
 function HomeScreen({ navigation }) {
   const[data, setData] = useState(DATA)
   const[isRender, setisRender] = useState(false)
   const[isModalVisible, setisModalVisible] = useState(false)
-  const[inputText, setinputText] = useState()
   const[editItem, seteditItem] = useState()
-
+  const [isOperationnal, setIsOperationnal] = useState(false);
 //Pressing an Item on the FlatList, Opens Modal
   const onPressItem = (item) => {
     setisModalVisible(true);
-    setinputText(item.status)
     seteditItem(item.id)
+    
   }
 //Renders each Item on the FlatList
   const renderItem = ({item, index}) => {
@@ -107,6 +116,21 @@ function HomeScreen({ navigation }) {
       style={styles.item}
       onPress={() => onPressItem(item)}
       >
+          <ImageBackground
+            source={require('./assets/RocketElevatorsLogo.png')}
+            resizeMode="contain"
+            style={{
+              height:
+              '100%'
+              ,
+              width:
+              '100%'
+              ,
+              alignSelf:'center',
+              // opacity: 0.6,
+              position: 'absolute',
+            }}
+          />
         <Text style={styles.text}>Elevator #{item.id}{"\n"}Status: {item.status}{"\n"}Building type: {item.entity_type}{"\n"}Serial #{item.serial_number}
         </Text>
       </TouchableOpacity>
@@ -116,7 +140,7 @@ function HomeScreen({ navigation }) {
   const handleEditItem = (editItem) => {
     const newData = data.map(item => {
       if(item.id == editItem){
-        item.status = inputText;
+        item.status = "serviced";
         return item
       }
       return item;
@@ -124,21 +148,58 @@ function HomeScreen({ navigation }) {
     setData(newData);
     setisRender(!isRender)
   }
-//Writing on InputText in Modal
-  const hello = async(text) => {
-    setinputText(text)
-  }
-//Pressing Save Button
-  const onPressSaveEdit = async() => {
+//Set to Serviced
+  const setToOperationnalAPI = async() => {
     handleEditItem(editItem)
-    let response = await fetch(
-    `https://hidden-woodland-68127.herokuapp.com/api/elevators/${editItem}` //Text in the InputText
-    );
-    let json = await response.json();
-    alert(`you changed the elevator from ${json.status} to ${inputText}`)
-    setTimeout(() => {
-      setisModalVisible(false)
-    }, 3000);
+    fetch(`https://hidden-woodland-68127.herokuapp.com/api/elevators/${editItem}/serviced`, {
+      method: 'PUT',
+      headers: {
+      'Content-Type': 'application/json',
+      },
+      body: "{}",
+    })
+    .then(verifyOperationalAPI())
+  }
+
+  const verifyOperationalAPI = async () => {
+    try {
+      const response = await fetch(
+        `https://hidden-woodland-68127.herokuapp.com/api/elevators/${editItem}`
+      )
+     .then()
+      const json = await response.json();
+      if(json.status == "serviced") {
+        setTimeout(() => {
+          console.log(json.status)
+          setIsOperationnal(true)
+          // removeItem(editItem)
+        }, 1500);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const goBack = () => {
+    setisModalVisible(false)
+    seteditItem()
+    removeItem(editItem)
+    setIsOperationnal(false)
+  }
+
+  const removeItem = (id) => {
+    let arr = data.filter(function(item) {
+      return item.id !== id
+    })
+    setData(arr);
+  }
+
+  function checkID(data) {
+    if(editItem == undefined)
+    {
+      return 
+    }
+    return data.id == editItem;
   }
 
   return(
@@ -154,27 +215,65 @@ function HomeScreen({ navigation }) {
         visible={isModalVisible}
         onRequestClose={() => setisModalVisible(false)}
         >
+          <SafeAreaView style={{
+            alignItems: 'flex-start', 
+            // justifyContent: 'flex-start', 
+            backgroundColor: '#d81b3d', 
+            height: 91,
+            borderLeftWidth: 20, borderLeftColor: '#d81b3d' }}
+          >
+            <Button
+              color='white'
+              title="Go Back"
+              onPress={() => isOperationnal? goBack() : setisModalVisible(false)}
+              />
+          </SafeAreaView>
+          <View style={{alignItems: 'center', justifyContent: 'center', backgroundColor: '#a8acaf', height: 150}}>
+            <Image 
+              source={require('./assets/RocketElevatorsLogo.png')} 
+              style={{
+                height: (Dimensions.get('window').width - 25)/2.75, 
+                width: Dimensions.get('window').width - 25,
+                resizeMode: 'stretch',}} 
+            />
+          </View>
           <View style={styles.modalView}>
-            <Text style={styles.text}>
-              Change Status:
+            <Text style={styles.statusText}>
+              {editItem == undefined ? '' : "Elevator # " + (data.find(checkID)).id}
             </Text>
-            <TextInput
-            style={styles.textInput}
-            onChangeText={(text) => hello(text)}
-            defaultValue={inputText}
-            editable={true}
-            multiline={false}
-            maxLength={200}
-            >
-            </TextInput>
+            <Text style={styles.statusText}>
+              Current Status:
+            </Text>
+            <Text style={{
+              color: isOperationnal ? '#39ff14' : '#d81b3d',
+              fontSize: 30,
+              fontWeight: 'bold',
+            }}>
+              {editItem == undefined ? '' : isOperationnal ? 'serviced' : (data.find(checkID)).status}
+            </Text>
             <TouchableOpacity
-            onPress={() => onPressSaveEdit()}
-            style={styles.touchableSave}
+              onPress={() => isOperationnal ? goBack() : setToOperationnalAPI()}
+              style={{backgroundColor:isOperationnal ? '#0b64a0' : '#d81b3d',
+              paddingHorizontal: 100,
+              alignItems: 'center',
+              marginTop: 20,}}
             >
-            <Text style={styles.text}>Save</Text>
+              <Text style={{
+                marginVertical: 30,
+                fontSize: 25,
+                fontWeight: 'bold',
+                marginLeft: 10
+              }}>
+                {isOperationnal ? "Go Back" : "Set to Operational"}
+              </Text>
             </TouchableOpacity>
           </View>
       </Modal>
+      <Button
+        color='black'
+        title="Log Out"
+        onPress={() => navigation.navigate("Login")}
+        />
     </SafeAreaView>
   )
 }
@@ -204,8 +303,9 @@ function App() {
           component={HomeScreen}
           options={{
             title: 'Home',
+            headerBackTitle: 'Log Out',
             headerStyle: {
-              backgroundColor: '#d81b3d',
+              backgroundColor: '#0b64a0',
             },
             headerTintColor: '#fff',
             headerTitleStyle: {
@@ -218,41 +318,39 @@ function App() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container:{
-    flex: 1
+    flex: 1,
+    backgroundColor: '#a8acaf'
   },
   item: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'grey',
+    borderBottomWidth: 3,
+    borderBottomColor: '#d81b3d',
+    borderLeftWidth: 3,
+    borderLeftColor: 'black',
+    borderRightWidth: 3,
+    borderRightColor: 'black',
     alignItems: 'flex-start',
-    backgroundColor: '#d81b3d'
+    backgroundColor: 'black'
   },
   text: {
+    color:'white',
     marginVertical: 30,
-    fontSize: 25,
+    fontSize: 30,
     fontWeight: 'bold',
     marginLeft: 10
   },
-  textInput: {
-    width: '90%',
-    height: '70',
-    borderColor: 'grey',
-    borderWidth: 1,
-    fontSize: 25,
+  statusText: {
+    color:'white',
+    fontSize: 30,
+    fontWeight: 'bold',
   },
   modalView: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'flex-start',
+    backgroundColor: '#a8acaf'
   },
-  touchableSave: {
-    backgroundColor: 'orange',
-    paddingHorizontal: 100,
-    alignItems: 'center',
-    marginTop: 20,
-  }
 });
 
 export default App;
