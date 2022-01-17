@@ -1,11 +1,5 @@
-# Sample Snack app
-
-Open the `App.js` file to start writing some code. You can preview the changes directly on your phone or tablet by scanning the **QR code** or use the iOS or Android emulators. When you're done, click **Save** and share the link!
-
-When you're ready to see everything that Expo provides (or if you want to use your own editor) you can **Download** your project and use it with [expo-cli](https://docs.expo.io/get-started/installation).
-
-All projects created in Snack are publicly available, so you can easily share the link to this project via link, or embed it on a web page with the `<>` button.
-
-If you're having problems, you can tweet to us [@expo](https://twitter.com/expo) or ask in our [forums](https://forums.expo.io/c/snack).
-
-Snack is Open Source. You can find the code on the [GitHub repo](https://github.com/expo/snack).
+# Rocket Elevators Mobile
+## We are pleased to show to you, Rocket Elevators first Mobile app!
+#### From the Log In screen, you can enter the email of any employee of Rocket Elevator's Team and log in right away.
+#### From the Home screen you can see and press any elevator that is not operational and log out from the top-left button or the bottom button.
+#### From the selecting an elevator, you can either go back to the Home screen or change an elevator's status from "offline"/"intervention" to "serviced" and then back out after changing it with the same button!
